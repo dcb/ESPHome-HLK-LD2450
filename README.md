@@ -5,7 +5,16 @@
 > - bounds checks on radar config replies (a short or corrupt frame could read past the buffer) and an empty-queue fix for late acknowledgements;
 > - a corrected sign-change test in the zone and convexity checks (results were already correct).
 >
-> Use it with `source: github://dcb/ESPHome-HLK-LD2450@v1.1.0` (pin a tag, not `main`).
+> Use it pinned to a commit, not `main` (a tag can be moved, a commit SHA cannot):
+> ```yaml
+> external_components:
+>   - source:
+>       type: git
+>       url: https://github.com/dcb/ESPHome-HLK-LD2450
+>       ref: 5e0eb52e2ca74960626bc01557328c611f23cbd8  # v1.1.0
+>     refresh: never
+>     components: [LD2450]
+> ```
 >
 > **Radar firmware 2.14.25112412** leaves the LD2450's UART at 9600 baud after the update; the ESP then reads only `0x00` bytes. Recover by building with `uart: baud_rate: 9600`, selecting `256000` on the *Sensor Baud Rate* select once the radar answers, and rebuilding at 256000.
 
