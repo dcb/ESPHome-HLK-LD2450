@@ -1,5 +1,14 @@
 # ESPHome Hi-Link HKL-LD2450 [![CI](https://github.com/TillFleisch/ESPHome-HLK-LD2450/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/TillFleisch/ESPHome-HLK-LD2450/actions/workflows/ci.yaml)
 
+> **Maintained fork.** Upstream [TillFleisch/ESPHome-HLK-LD2450](https://github.com/TillFleisch/ESPHome-HLK-LD2450) has had no commits since 2025-12 and no longer compiles on ESPHome 2026.10. This fork carries:
+> - upstream PR #44 (ESPHome 2026.x API changes: `get_raw_state()`, `get_unit_of_measurement_ref()`, explicit `automation.h` include, `synchronous=` on `register_action`);
+> - bounds checks on radar config replies (a short or corrupt frame could read past the buffer) and an empty-queue fix for late acknowledgements;
+> - a corrected sign-change test in the zone and convexity checks (results were already correct).
+>
+> Use it with `source: github://dcb/ESPHome-HLK-LD2450@v1.1.0` (pin a tag, not `main`).
+>
+> **Radar firmware 2.14.25112412** leaves the LD2450's UART at 9600 baud after the update; the ESP then reads only `0x00` bytes. Recover by building with `uart: baud_rate: 9600`, selecting `256000` on the *Sensor Baud Rate* select once the radar answers, and rebuilding at 256000.
+
 This external [ESPHome](https://esphome.io) component adds support for the [Hi-Link HKL-LD2450](https://www.hlktech.net/index.php?id=1157) Human presence sensor to ESPHome.
 In addition to a basic binary presence sensor, this component adds various different sensors for each detected target and supports custom presence detection Zones.
 
