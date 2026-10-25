@@ -23,7 +23,7 @@ namespace esphome::ld2450
                 return false;
 
             float cross_product = dx_1 * dy_2 - dy_1 * dx_2;
-            if (!std::isnan(last_cross_product) && ((cross_product > 0 && last_cross_product < 0) || (cross_product > 0 && last_cross_product < 0)))
+            if (!std::isnan(last_cross_product) && ((cross_product > 0 && last_cross_product < 0) || (cross_product < 0 && last_cross_product > 0)))
                 return false;
             last_cross_product = cross_product;
         }
@@ -135,7 +135,7 @@ namespace esphome::ld2450
             int dy_2 = point.y - polygon_[i % size].y;
             float cross_product = dx_1 * dy_2 - dy_1 * dx_2;
 
-            if (!std::isnan(last_cross_product) && ((cross_product > 0 && last_cross_product < 0) || (cross_product > 0 && last_cross_product < 0)))
+            if (!std::isnan(last_cross_product) && ((cross_product > 0 && last_cross_product < 0) || (cross_product < 0 && last_cross_product > 0)))
             {
                 is_inside = false;
                 // Early stopping for un-tracked targets

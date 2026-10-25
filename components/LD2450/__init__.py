@@ -207,7 +207,7 @@ def is_convex(points):
 
         if last_cross_product is not None and (
             (cross_product > 0 and last_cross_product < 0)
-            or (cross_product > 0 and last_cross_product < 0)
+            or (cross_product < 0 and last_cross_product > 0)
         ):
             return False
         last_cross_product = cross_product
