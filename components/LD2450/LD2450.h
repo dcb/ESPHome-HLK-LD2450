@@ -23,6 +23,10 @@
 
 #define SENSOR_UNAVAILABLE_TIMEOUT 4000
 #define CONFIG_RECOVERY_INTERVAL 60000
+// Config reply content length: command word + status word at least, and at most
+// the parse buffer (the longest reply read here, firmware version, is 12)
+#define MIN_CONFIG_MESSAGE_LENGTH 4
+#define MAX_CONFIG_MESSAGE_LENGTH 20
 #define POST_RESTART_LOCKOUT_DELAY 2000
 
 #define COMMAND_MAX_RETRIES 10

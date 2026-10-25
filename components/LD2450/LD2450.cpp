@@ -210,15 +210,26 @@ namespace esphome::ld2450
                     // Read message content length
                     uint8_t content_length[2];
                     read_array(content_length, 2);
-                    configuration_message_length_ = content_length[1] << 8 | content_length[0];
-                    // Limit max message length
-                    configuration_message_length_ = std::min(configuration_message_length_, 20);
+                    int length = content_length[1] << 8 | content_length[0];
+                    // A valid reply holds at least the command word and the status word.
+                    // Anything shorter or longer than the buffer is a corrupt frame (e.g. a
+                    // baud mismatch): drop it and resync on the next header. A length of 0
+                    // must never be kept, since 0 also means "length not read yet" here.
+                    if (length < MIN_CONFIG_MESSAGE_LENGTH || length > MAX_CONFIG_MESSAGE_LENGTH)
+                    {
+                        ESP_LOGW(TAG, "Dropping config frame with invalid length %d", length);
+                        configuration_message_length_ = 0;
+                        peek_status_ = 0;
+                        processed_message = true;
+                        continue;
+                    }
+                    configuration_message_length_ = length;
                 }
 
                 // Wait until message and frame end are available
                 if (available() >= configuration_message_length_ + 4)
                 {
-                    uint8_t msg[configuration_message_length_ + 4] = {0x00};
+                    uint8_t msg[MAX_CONFIG_MESSAGE_LENGTH + 4] = {0x00};
                     read_array(msg, configuration_message_length_ + 4);
 
                     // Assert frame end read correctly
@@ -358,9 +369,11 @@ namespace esphome::ld2450
 
     void LD2450::process_config_message(uint8_t *msg, int len)
     {
-        // Remove command from Queue upon receiving acknowledgement
-        std::vector<uint8_t> command = command_queue_.front();
-        if (command_queue_.size() > 0 && command[0] == msg[0] && msg[1] == 0x01)
+        // Callers guarantee len >= MIN_CONFIG_MESSAGE_LENGTH (command + status word)
+
+        // Remove command from Queue upon receiving acknowledgement. The queue can be
+        // empty here: a late ACK may arrive after the queue was cleared on a timeout.
+        if (!command_queue_.empty() && command_queue_.front()[0] == msg[0] && msg[1] == 0x01)
         {
             command_queue_.erase(command_queue_.begin());
             command_send_retries_ = 0;
@@ -386,12 +399,13 @@ namespace esphome::ld2450
             apply_change_lockout_ = millis();
         }
 
-        if (msg[0] == COMMAND_READ_VERSION && msg[1] == true)
+        // Each reply is only parsed when it carries the bytes it is read from
+        if (msg[0] == COMMAND_READ_VERSION && msg[1] == true && len >= 12)
         {
             ESP_LOGI(TAG, "Sensor Firmware-Version: V%X.%02X.%02X%02X%02X%02X", msg[7], msg[6], msg[11], msg[10], msg[9], msg[8]);
         }
 
-        if (msg[0] == COMMAND_READ_MAC && msg[1] == true)
+        if (msg[0] == COMMAND_READ_MAC && msg[1] == true && len >= 10)
         {
 
             bool bt_enabled = !(msg[4] == 0x08 && msg[5] == 0x05 && msg[6] == 0x04 && msg[7] == 0x03 && msg[8] == 0x02 && msg[9] == 0x01);
@@ -410,7 +424,7 @@ namespace esphome::ld2450
             }
         }
 
-        if (msg[0] == COMMAND_READ_TRACKING_MODE && msg[1] == true)
+        if (msg[0] == COMMAND_READ_TRACKING_MODE && msg[1] == true && len >= 6)
         {
             bool multi_tracking_state = msg[4] == 0x02;
             if (tracking_mode_switch_ != nullptr)
